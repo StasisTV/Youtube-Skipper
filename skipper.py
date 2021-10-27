@@ -3,11 +3,7 @@ import mouse
 import json
 from datetime import datetime
 from time import sleep
-from PIL import ImageGrab
-from PIL import ImageOps
-
-
-THRESHOLD = 0.65
+from PIL import ImageGrab, ImageOps
 
 def main():
     cfg = loadConfig()
@@ -47,23 +43,22 @@ def find(config):
         if resized.shape[0] < h or resized.shape[1] < w:
             break
 
-        
-
         res = cv2.matchTemplate(resized, template, cv2.TM_CCOEFF_NORMED)
-        res2 = cv2.matchTemplate(resized, temp2, cv2.TM_CCOEFF_NORMED)
 
         _, maxVal, _, maxLoc = cv2.minMaxLoc(res)
-        _, maxVal2, _, maxLoc2 = cv2.minMaxLoc(res2)
 
-        if maxVal2 > maxVal:
-            maxVal, maxLoc = maxVal2, maxLoc2
+        if config["doubleCheck"]:
+            res2 = cv2.matchTemplate(resized, temp2, cv2.TM_CCOEFF_NORMED)
+            _, maxVal2, _, maxLoc2 = cv2.minMaxLoc(res2)
+            if maxVal2 > maxVal:
+                maxVal, maxLoc = maxVal2, maxLoc2
 
         if found is None or maxVal > found[0]:
             found = (maxVal, maxLoc, r)
 
     maxVal, maxLoc, r = found
     print(maxVal)
-    if maxVal > THRESHOLD:            
+    if maxVal >= config["threshold"]:            
         startX, startY = (int(maxLoc[0] * r), int(maxLoc[1] * r))
         endX, endY = (int((maxLoc[0] + w) * r), int((maxLoc[1] + h) * r))
 

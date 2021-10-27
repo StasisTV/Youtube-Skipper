@@ -1,5 +1,7 @@
 {
     "mouseReturn": true,
     "maxSpeed": 2,
-    "sizes": [0.75,1,1.25]
+    "sizes": [0.75,1,1.25],
+    "threshold": 0.75,
+    "doubleCheck": false
 }
