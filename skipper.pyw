@@ -1,14 +1,25 @@
-import cv2
+#basic functions
 import mouse
 import json
+import threading
+import sys
 from datetime import datetime
 from time import sleep
+
+#image manipulation and template matching
 from PIL import ImageGrab, ImageOps
+import cv2
+
+#system tray
+from PyQt5.QtGui import * 
+from PyQt5.QtWidgets import * 
+END = False
 
 def main():
+    print('a')
     cfg = loadConfig()
     maxSpeed = cfg["maxSpeed"]
-    while True:
+    while not END:
         now = datetime.now().second
         find(cfg)
         now2 = datetime.now().second
@@ -74,5 +85,34 @@ def find(config):
         cv2.rectangle(img, (startX, startY), (endX, endY), (0, 0, 255), 2)
         cv2.imwrite('result.png', img)
 
-if __name__ == "__main__":
-    main()
+def end():
+    global END
+    END = True
+    sys.exit()
+
+if __name__ == "__main__":  
+    app = QApplication([])
+    app.setQuitOnLastWindowClosed(False)
+    
+    # Adding an icon
+    icon = QIcon("icon.png")
+    
+    # Adding item on the menu bar
+    tray = QSystemTrayIcon()
+    tray.setIcon(icon)
+    tray.setVisible(True)
+    
+    # Creating the options
+    menu = QMenu()
+    menu.setFont(QFont("Arial", 12))
+    quit = QAction("Quit")
+    quit.triggered.connect(end)
+    menu.addAction(quit)
+
+    # Adding options to the System Tray
+    tray.setContextMenu(menu)
+    
+    thread = threading.Thread(target=main)
+    thread.start()
+
+    app.exec()
