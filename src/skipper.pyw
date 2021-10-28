@@ -15,33 +15,41 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import * 
 END = False
 
+#infinite loop that breaks when END = True
 def main(cfg):
     maxSpeed = cfg["maxSpeed"]
     while not END:
         now = datetime.now().second
         find(cfg)
+        #prevents loop from occuring more than maxSpeed
         now2 = datetime.now().second
         dif = abs(now - now2)
         if dif < maxSpeed:
             sleep(maxSpeed - dif)
 
+#loads json and places in config object then returns
 def loadConfig():
     f = open("settings.json")
     config = json.load(f)
     return config
 
 def find(config):
+    #Takes screenshots makes it grayscale and saves
     img = ImageGrab.grab(bbox=None, include_layered_windows=False, all_screens=False, xdisplay=None)
     modImg = ImageOps.grayscale(img)
     modImg.save("screen.png")
 
+    #loads images
     img = cv2.imread('screen.png')
     template = cv2.imread('skip.png')
-    temp2 = cv2.imread('skip2.png')
+    temp2 = None
+    if config["doubleCheck"]:
+        temp2 = cv2.imread('skip2.png')
     h, w = template.shape[:2]
 
     found = None
 
+    #loops through each size and checks for template(s) skip button(s)
     for size in config["sizes"]:
         width = int(img.shape[1] * size)
         height = int(img.shape[0] * size)
@@ -66,7 +74,8 @@ def find(config):
             found = (maxVal, maxLoc, r)
 
     maxVal, maxLoc, r = found
-    print(maxVal)
+
+    #if maxVal is greater than threshold move mouse to middle of button and click
     if maxVal >= config["threshold"]:            
         startX, startY = (int(maxLoc[0] * r), int(maxLoc[1] * r))
         endX, endY = (int((maxLoc[0] + w) * r), int((maxLoc[1] + h) * r))
@@ -83,6 +92,7 @@ def find(config):
         cv2.rectangle(img, (startX, startY), (endX, endY), (0, 0, 255), 2)
         cv2.imwrite('result.png', img)
 
+#ends
 def end():
     global END
     END = True
